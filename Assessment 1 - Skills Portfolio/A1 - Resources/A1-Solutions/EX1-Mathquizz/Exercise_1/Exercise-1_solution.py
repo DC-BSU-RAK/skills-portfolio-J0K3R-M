@@ -13,7 +13,7 @@ root.update_idletasks()
 SCR_W, SCR_H = root.winfo_width(), root.winfo_height()
 
 # adding background image and color
-BG_PATH = "C:\\Users\\minha\\OneDrive\\Documents\\GitHub\\skills-portfolio-J0K3R-M\\Assessment 1 - Skills Portfolio\\A1 - Resources\\A1-Solutions_MINHAJ_MUHAMMED\\Exercise_1\\images\\Gemini_Generated_Image_vbpofzvbpofzvbpo.png"
+BG_PATH = "C:\\Users\\minha\\OneDrive\\Documents\\GitHub\\skills-portfolio-J0K3R-M\\Assessment 1 - Skills Portfolio\\A1 - Resources\\A1-Solutions\\EX1-Mathquizz\\Exercise_1\\images\\Gemini_Generated_Image_vbpofzvbpofzvbpo.png"
 BG_COLOR = "#222222"
 bg_image = Image.open(BG_PATH).resize((SCR_W, SCR_H), Image.LANCZOS) if os.path.exists(BG_PATH) else Image.new("RGB", (SCR_W, SCR_H), BG_COLOR)
 bg_photo = ImageTk.PhotoImage(bg_image)
