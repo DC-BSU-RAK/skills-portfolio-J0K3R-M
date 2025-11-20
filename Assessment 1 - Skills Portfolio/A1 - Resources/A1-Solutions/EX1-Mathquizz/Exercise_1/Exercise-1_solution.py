@@ -1,169 +1,191 @@
-import tkinter as tk
+from tkinter import *
 from tkinter import messagebox
-from PIL import Image, ImageTk
-import os
 import random
+from PIL import Image, ImageTk
 
-# ===== setting up of math quizz =====
-root = tk.Tk()
-root.title("Maths Quiz")
-root.attributes("-fullscreen", True)
-root.bind("<Escape>", lambda e: root.destroy())
-root.update_idletasks()
-SCR_W, SCR_H = root.winfo_width(), root.winfo_height()
+# Initialize main window
+root = Tk()
+root.title("Math Quiz")
+root.geometry("900x650")
+root.resizable(False, False)
 
-# adding background image and color
-BG_PATH = "C:\\Users\\minha\\OneDrive\\Documents\\GitHub\\skills-portfolio-J0K3R-M\\Assessment 1 - Skills Portfolio\\A1 - Resources\\A1-Solutions\\EX1-Mathquizz\\Exercise_1\\images\\background.png"
-BG_COLOR = "#222222"
-bg_image = Image.open(BG_PATH).resize((SCR_W, SCR_H), Image.LANCZOS) if os.path.exists(BG_PATH) else Image.new("RGB", (SCR_W, SCR_H), BG_COLOR)
+# Load background image
+bg_image = Image.open("C:\\Users\\minha\\OneDrive\\Documents\\GitHub\\skills-portfolio-J0K3R-M\\Assessment 1 - Skills Portfolio\\A1 - Resources\\A1-Solutions\\EX1-Mathquizz\\Exercise_1\\images\\background.png")  # Ensure this matches your uploaded image filename
 bg_photo = ImageTk.PhotoImage(bg_image)
-bg_label = tk.Label(root, image=bg_photo)
-bg_label.image = bg_photo
-bg_label.place(x=0, y=0, relwidth=1, relheight=1)
-bg_label.lower()
 
-# adding Button and Style
-BTN_STYLE = {"bg": BG_COLOR, "fg": "white", "activebackground": BG_COLOR, "activeforeground": "white", "bd": 0, "highlightthickness": 0, "relief": "flat", "font": ("Roboto", 14)}
+# Global variables
+score = 0
+question_number = 1
+difficulty = ""
+right_answer = 0
+quiz_running = False
 
-# Variables in order to track quiz state    
-TOTAL_Q = 10
-current_q = score = tries = answer = 0
-paused = quiz_active = False
-difficulty = tk.IntVar(value=1)
-q_var = tk.StringVar()
-result_var = tk.StringVar()
-info_var = tk.StringVar(value="Press Start to begin. Esc to quit.")
+# Function to switch frames
+def show_frame(frame):
+    for f in all_frames:
+        f.place_forget()
+    frame.place(relwidth=1, relheight=1)
 
-# functions to handle quiz logic
-def rand_int(level):
-    a, b = (random.randint(0, 9), random.randint(0, 9)) if level == 1 else (random.randint(10, 99), random.randint(10, 99)) if level == 2 else (random.randint(1000, 9999), random.randint(1000, 9999))
-    op = random.choice(["+", "-"])
-    if op == "-" and a < b:
-        a, b = b, a
-    return a, b, op
-
-def new_question(): # generate a new question
-    global answer, tries
-    tries = 0
-    a, b, op = rand_int(difficulty.get())
-    answer = a + b if op == "+" else a - b
-    q_var.set(f"{a} {op} {b} = ?")
-    result_var.set("")
-    entry.config(state="normal")
-    entry.delete(0, "end")
-    submit_btn.config(state="normal")
-    next_btn.config(state="disabled")
-
-def start_quiz(): # start the quiz
-    global current_q, score, quiz_active
-    current_q = score = 0
-    quiz_active = True
-    new_question()
-    info_var.set(f"Q {current_q+1}/{TOTAL_Q}   Score: {score}")
-    btn_start.config(state="disabled")
-    btn_pause.config(state="normal")
-    btn_stop.config(state="normal")
-    for rb in diff_radiobtn:
-        rb.config(state="disabled")
-
-def pause_quiz(): # pause or resume the quiz
-    global paused
-    paused = not paused
-    state = "disabled" if paused else "normal"
-    for w in (entry, submit_btn, next_btn):
-        w.config(state=state)
-    btn_pause.config(text="Resume" if paused else "Pause")
-
-def stop_quiz():# stop the quiz
-    global current_q, score, quiz_active, paused
-    current_q = score = 0
-    quiz_active = paused = False
-    q_var.set("")
-    result_var.set("")
-    info_var.set("Quiz stopped. Press Start.")
-    entry.config(state="disabled")
-    entry.delete(0, "end")
-    btn_start.config(state="normal")
-    btn_pause.config(state="disabled", text="Pause")
-    btn_stop.config(state="disabled")
-    for rb in diff_radiobtn:
-        rb.config(state="normal")
-
-def check_answer(): # check the user's answer and return feedback
-    global score, tries
-    tries += 1
-    try:
-        user = int(entry.get())
-    except ValueError:
-        result_var.set("Enter a number!")
+# Function to generate a math question
+def generate_question():
+    global right_answer
+    if not quiz_running:
         return
-    if user == answer:
-        pts = 10 if tries == 1 else 5
-        score += pts
-        result_var.set(f"Correct! +{pts}")
-        entry.config(state="disabled")
-        submit_btn.config(state="disabled")
-        next_btn.config(state="normal")
+
+    if difficulty == "Easy":
+        limit, ops = 10, ["+", "-"]
+    elif difficulty == "Moderate":
+        limit, ops = 20, ["*", "//"]
     else:
-        if tries >= 2:
-            result_var.set(f"Wrong. Answer: {answer}")
-            entry.config(state="disabled")
-            submit_btn.config(state="disabled")
-            next_btn.config(state="normal")
-        else:
-            result_var.set("Wrong. Try once more.")
+        limit, ops = 60, ["+", "-", "*", "//"]
 
-def next_question():
-    global current_q
-    current_q += 1
-    if current_q >= TOTAL_Q:
-        messagebox.showinfo("Done", f"Quiz complete!\nScore: {score}/{TOTAL_Q*10}")
-        stop_quiz()
+    a, b = random.randint(1, limit), random.randint(1, limit)
+    op = random.choice(ops)
+    if op == "//" and b == 0:
+        b = 1
+
+    question_label.config(text=f"What is {a} {op} {b}?")
+    score_label.config(text=f"Score: {score}")
+    right_answer = eval(f"{a}{op}{b}")
+
+# Function to handle answer submission
+def submit_answer():
+    global score, question_number
+    if not quiz_running:
+        return
+
+    try:
+        ans = int(answer_box.get())
+    except ValueError:
+        messagebox.showwarning("Oops!", "Please enter a valid number.")
+        return
+
+    if ans == right_answer:
+        score += 1
+
+    answer_box.delete(0, END)
+
+    if question_number < 5:
+        question_number += 1
+        generate_question()
     else:
-        info_var.set(f"Q {current_q+1}/{TOTAL_Q}   Score: {score}")
-        new_question()
+        show_results()
 
-def show_guidelines(): # show quiz guidelines
-    messagebox.showinfo("Guidelines", "10 questions.\n10 pts – first try.\n5 pts – second try.\nPress Esc to quit.")
+# Start quiz
+def start_quiz(level):
+    global score, question_number, difficulty, quiz_running
+    difficulty = level
+    score = 0
+    question_number = 1
+    quiz_running = True
+    show_frame(frame_quiz)
+    generate_question()
 
-# UI of the quizz application
-# Control Bar
-ctrl_frame = tk.Frame(root, bg=BG_COLOR)
-ctrl_frame.place(relx=0.5, rely=0.08, anchor="n")
-btn_start = tk.Button(ctrl_frame, text="Start", **BTN_STYLE, command=start_quiz)
-btn_pause = tk.Button(ctrl_frame, text="Pause", **BTN_STYLE, command=pause_quiz, state="disabled")
-btn_stop = tk.Button(ctrl_frame, text="Stop", **BTN_STYLE, command=stop_quiz, state="disabled")
-btn_guide = tk.Button(ctrl_frame, text="Guidelines", **BTN_STYLE, command=show_guidelines)
-btn_quit = tk.Button(ctrl_frame, text="Quit", **BTN_STYLE, command=root.destroy)
-for b in (btn_start, btn_pause, btn_stop, btn_guide, btn_quit):
-    b.pack(side="left", padx=10)
+# Pause quiz
+def pause_quiz():
+    global quiz_running
+    quiz_running = False
+    question_label.config(text="Quiz Paused")
 
-# Info Label
-tk.Label(root, textvariable=info_var, bg=BG_COLOR, fg="white", font=("Roboto", 12)).place(relx=0.5, rely=0.18, anchor="n")
+# Resume quiz
+def resume_quiz():
+    global quiz_running
+    quiz_running = True
+    generate_question()
 
-# Difficulty
-diff_frame = tk.Frame(root, bg=BG_COLOR)
-diff_frame.place(relx=0.5, rely=0.28, anchor="n")
-tk.Label(diff_frame, text="Difficulty:", bg=BG_COLOR, fg="white", font=("Roboto", 12)).pack(side="left", padx=5)
-diff_radiobtn = []
-for txt, val in (("Easy", 1), ("Medium", 2), ("Hard", 3)):
-    rb = tk.Radiobutton(diff_frame, text=txt, variable=difficulty, value=val, bg=BG_COLOR, fg="white", selectcolor=BG_COLOR, font=("Roboto", 12))
-    rb.pack(side="left", padx=5)
-    diff_radiobtn.append(rb)
+# Stop quiz
+def stop_quiz():
+    global quiz_running
+    quiz_running = False
+    show_results()
 
-# Quiz Area
-quiz = tk.Frame(root, bg=BG_COLOR)
-quiz.place(relx=0.5, rely=0.35, anchor="n")
-tk.Label(quiz, textvariable=q_var, bg=BG_COLOR, fg="white", font=("Roboto", 24)).pack(pady=15)
-entry = tk.Entry(quiz, font=("Roboto", 18), justify="center", width=10, state="disabled")
-entry.pack(pady=5)
-tk.Label(quiz, textvariable=result_var, bg=BG_COLOR, fg="white", font=("Roboto", 12)).pack(pady=5)
+# Show final score
+def show_results():
+    show_frame(frame_score)
+    result_label.config(text=f"Your Score: {score} / 5")
 
-btn_bar = tk.Frame(quiz, bg=BG_COLOR)
-btn_bar.pack(pady=10)
-submit_btn = tk.Button(btn_bar, text="Submit", **BTN_STYLE, command=check_answer, state="disabled")
-next_btn = tk.Button(btn_bar, text="Next", **BTN_STYLE, command=next_question, state="disabled")
-submit_btn.pack(side="left", padx=8)
-next_btn.pack(side="left", padx=8)
+# Exit confirmation
+def confirm_exit():
+    if messagebox.askyesno("Exit", "Are you sure you want to quit?"):
+        root.destroy()
 
+# Button hover animation
+def on_enter(e):
+    e.widget.config(bg="#1f2a44")
+
+def on_leave(e):
+    e.widget.config(bg="#2c3e50")
+
+# Create frames
+frame_start = Frame(root)
+frame_difficulty = Frame(root)
+frame_quiz = Frame(root)
+frame_score = Frame(root)
+all_frames = [frame_start, frame_difficulty, frame_quiz, frame_score]
+
+# Add background to each frame
+for frame in all_frames:
+    bg_label = Label(frame, image=bg_photo)
+    bg_label.place(relwidth=1, relheight=1)
+
+# --- Start Frame ---
+Label(frame_start, text="Welcome to the Math Quiz!", font=("Arial", 28), fg="white", bg="#2c3e50").pack(pady=150)
+btn_start = Button(frame_start, text="Start Quiz", font=("Arial", 18), bg="#2c3e50", fg="white", command=lambda: show_frame(frame_difficulty))
+btn_start.pack()
+btn_start.bind("<Enter>", on_enter)
+btn_start.bind("<Leave>", on_leave)
+
+# --- Difficulty Frame ---
+Label(frame_difficulty, text="Choose Difficulty", font=("Arial", 24), fg="white", bg="#2c3e50").pack(pady=80)
+for level in ["Easy", "Moderate", "Hard"]:
+    btn = Button(frame_difficulty, text=level, font=("Arial", 16), width=20, bg="#2c3e50", fg="white", command=lambda l=level: start_quiz(l))
+    btn.pack(pady=10)
+    btn.bind("<Enter>", on_enter)
+    btn.bind("<Leave>", on_leave)
+
+# --- Quiz Frame ---
+question_label = Label(frame_quiz, text="", font=("Arial", 22), fg="white", bg="#2c3e50")
+question_label.pack(pady=40)
+
+answer_box = Entry(frame_quiz, font=("Arial", 18), width=10)
+answer_box.pack()
+
+btn_submit = Button(frame_quiz, text="Submit", font=("Arial", 16), bg="#2c3e50", fg="white", command=submit_answer)
+btn_submit.pack(pady=10)
+btn_submit.bind("<Enter>", on_enter)
+btn_submit.bind("<Leave>", on_leave)
+
+score_label = Label(frame_quiz, text="Score: 0", font=("Arial", 18), fg="white", bg="#2c3e50")
+score_label.pack(pady=10)
+
+# Control buttons
+for text, cmd in [("Pause", pause_quiz), ("Resume", resume_quiz), ("Stop", stop_quiz)]:
+    btn = Button(frame_quiz, text=text, font=("Arial", 14), bg="#2c3e50", fg="white", command=cmd)
+    btn.pack(pady=5)
+    btn.bind("<Enter>", on_enter)
+    btn.bind("<Leave>", on_leave)
+
+# Guidelines box
+guidelines = """📘 Guidelines:
+- Choose your difficulty level
+- Answer 5 questions to complete the quiz
+- Use Pause/Resume/Stop anytime
+- Score updates live
+- Have fun and learn!"""
+
+guidelines_box = Label(frame_quiz, text=guidelines, font=("Arial", 14), fg="white", bg="#2c3e50", justify=LEFT, bd=2, relief=SOLID, padx=10, pady=10)
+guidelines_box.place(x=20, y=400)
+
+# --- Score Frame ---
+result_label = Label(frame_score, text="", font=("Arial", 26), fg="white", bg="#2c3e50")
+result_label.pack(pady=120)
+
+btn_home = Button(frame_score, text="Home", font=("Arial", 16), bg="#2c3e50", fg="white", command=lambda: show_frame(frame_start))
+btn_home.pack()
+btn_home.bind("<Enter>", on_enter)
+btn_home.bind("<Leave>", on_leave)
+
+# Start the app
+show_frame(frame_start)
+root.protocol("WM_DELETE_WINDOW", confirm_exit)
 root.mainloop()
