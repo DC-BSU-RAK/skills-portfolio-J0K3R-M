@@ -31,7 +31,7 @@ def apply_bg(frame, img_path):
     lbl.place(x=0, y=0, relwidth=1, relheight=1)
 
     def resize(event):
-        # Resize image to fit the frame dynamically
+        # Resize image to fit in the frame dynamically
         img_resized = img_orig.resize((event.width, event.height))
         photo = ImageTk.PhotoImage(img_resized)
         lbl.config(image=photo)
