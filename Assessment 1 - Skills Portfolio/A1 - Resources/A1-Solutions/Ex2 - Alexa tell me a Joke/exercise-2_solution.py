@@ -38,7 +38,7 @@ def apply_bg(frame, img_path):
         lbl.image = photo  # keep reference to avoid garbage collection
 
     frame.bind("<Configure>", resize)
-# Function: Show a new random joke
+# Function: Shows a new random joke
 def new_joke():
     global current
     if not joke_data:
