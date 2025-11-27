@@ -1,12 +1,12 @@
-#Assessment 1
+# Exercise 3 - Student Manager
 
 import tkinter as tk
-from tkinter import ttk, simpledialog, messagebox
+from tkinter import ttk, messagebox
 
-# locating file path for student data
+# File path
 FILE_PATH = r"C:\Users\minha\OneDrive\Documents\GitHub\skills-portfolio-J0K3R-M\Assessment 1 - Skills Portfolio\A1 - Resources\A1-Solutions\EX3- student manager\studentMarks.txt"
 
-# loading student data from file
+# student data 
 def load_students(filename=FILE_PATH):
     students = []
     with open(filename, "r") as f:
@@ -29,7 +29,7 @@ def load_students(filename=FILE_PATH):
             })
     return students
 
-#grading function
+# grading function
 def get_grade(p):
     if p >= 70: return "A"
     elif p >= 60: return "B"
@@ -37,7 +37,7 @@ def get_grade(p):
     elif p >= 40: return "D"
     else: return "F"
 
-#table management functions
+# table helpers
 def clear_table():
     for row in table.get_children():
         table.delete(row)
@@ -51,55 +51,80 @@ def fill_table(data):
             f"{s['percentage']:.2f}", s["grade"]
         ), tags=(tag,))
 
-#menu driven functions
+# action handlers
 def view_all():
     fill_table(students)
-
-def view_individual():
-    code = simpledialog.askstring("Search", "Enter student code or name:")
-    if not code: return
-    for s in students:
-        if s["code"] == code or s["name"].lower() == code.lower():
-            fill_table([s])
-            return
-    messagebox.showerror("Error", "Student not found!")
+    hide_search()
 
 def show_highest():
     best = max(students, key=lambda s: s["percentage"])
     fill_table([best])
+    hide_search()
 
 def show_lowest():
     worst = min(students, key=lambda s: s["percentage"])
     fill_table([worst])
+    hide_search()
 
-#setting up the gui window
+def view_individual():
+    # Show search bar when this button is clicked
+    search_frame.pack(fill="x", padx=10, pady=5)
+
+def search_student():
+    query = search_entry.get().strip().lower()
+    if not query:
+        messagebox.showwarning("Warning", "Please enter a student code or name.")
+        return
+    results = [s for s in students if s["code"] == query or s["name"].lower() == query]
+    if results:
+        fill_table(results)
+    else:
+        messagebox.showerror("Error", "Student not found!")
+
+def hide_search():
+    # Hide search bar when not needed
+    search_frame.pack_forget()
+
+# setting up the gui
 root = tk.Tk()
 root.title("Student Manager")
-root.geometry("750x400")
+root.geometry("950x500")
 root.configure(bg="#e6f2ff")  # light background
 
-# setting up menu
-menubar = tk.Menu(root)
-root.config(menu=menubar)
-menu = tk.Menu(menubar, tearoff=0)
-menubar.add_cascade(label="Menu", menu=menu)
-menu.add_command(label="1. View all records", command=view_all)
-menu.add_command(label="2. View individual record", command=view_individual)
-menu.add_command(label="3. Show highest score", command=show_highest)
-menu.add_command(label="4. Show lowest score", command=show_lowest)
+# Sidebar Frame
+sidebar = tk.Frame(root, bg="#22263d", width=200)
+sidebar.pack(side="left", fill="y")
 
-# designing the table
+# Main Frame
+main_frame = tk.Frame(root, bg="#ffffff")
+main_frame.pack(side="right", fill="both", expand=True)
+
+# Sidebar Buttons
+btn_style = {"font": ("Arial", 12, "bold"), "bg": "#444c63", "fg": "white", "width": 20, "height": 2}
+tk.Button(sidebar, text="View All Records", command=view_all, **btn_style).pack(pady=10)
+tk.Button(sidebar, text="View Individual Record", command=view_individual, **btn_style).pack(pady=10)
+tk.Button(sidebar, text="Show Highest Score", command=show_highest, **btn_style).pack(pady=10)
+tk.Button(sidebar, text="Show Lowest Score", command=show_lowest, **btn_style).pack(pady=10)
+
+# Search Bar Frame (initially hidden)
+search_frame = tk.Frame(main_frame, bg="#f0f0f0")
+tk.Label(search_frame, text="Search Student:", font=("Arial", 12), bg="#f0f0f0").pack(side="left", padx=5)
+search_entry = tk.Entry(search_frame, font=("Arial", 12), width=30)
+search_entry.pack(side="left", padx=5)
+tk.Button(search_frame, text="Search", command=search_student, font=("Arial", 12), bg="#0066cc", fg="white").pack(side="left", padx=5)
+
+# Table in Main Frame
 columns = ("Code", "Name", "Coursework", "Exam", "Percentage", "Grade")
-table = ttk.Treeview(root, columns=columns, show="headings")
+table = ttk.Treeview(main_frame, columns=columns, show="headings")
 
-# styling the table
+# Style the table
 style = ttk.Style()
 style.configure("Treeview.Heading", font=("Arial", 12, "bold"), anchor="center")
 style.configure("Treeview", font=("Arial", 11), rowheight=25)
-table.tag_configure("evenrow", background="#f9f9f9")  # striped rows
+table.tag_configure("evenrow", background="#f9f9f9")
 table.tag_configure("oddrow", background="#ffffff")
 
-# adding headings
+# Add headings
 for col in columns:
     table.heading(col, text=col, anchor="center")
     table.column(col, width=120, anchor="center")
